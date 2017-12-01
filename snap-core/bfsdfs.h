@@ -18,7 +18,6 @@ template <class PGraph> int GetShortPath(const PGraph& Graph, const int& SrcNId,
 /// Returns the length of the shortest path from node SrcNId to all other nodes in the network. ##GetShortPath2
 template <class PGraph> int GetShortPath(const PGraph& Graph, const int& SrcNId, TIntH& NIdToDistH, const bool& IsDir=false, const int& MaxDist=TInt::Mx);
 // >>
-// TIntV GetShortPath_fast_compute_path(const TIntIntH& pred, const TIntIntH& succ, int w);
 template <class PGraph> TIntV GetShortPath_fast(const PGraph& g, int src_id, int trg_id);
 // <<
 
@@ -389,24 +388,6 @@ int GetShortPath(const PGraph& Graph, const int& SrcNId, const int& DstNId, cons
 }
 
 // >>
-// TIntV GetShortPath_fast_compute_path(const TIntIntH& pred, const TIntIntH& succ, int w) {
-//   TIntV path;
-  
-//   while(w != -1) {
-//     path.Add(w);
-//     w = pred.GetDat(w);
-//   }
-  
-//   path.Reverse();
-  
-//   w = succ.GetDat(path.Last());
-//   while(w != -1) {
-//     path.Add(w);
-//     w = succ.GetDat(w);
-//   }
-  
-//   return path;
-// }
 
 template <class PGraph>
 TIntV GetShortPath_fast(const PGraph& g, int src_id, int trg_id) {
@@ -431,7 +412,7 @@ TIntV GetShortPath_fast(const PGraph& g, int src_id, int trg_id) {
       this_level = forward_fringe;
       forward_fringe.Clr();
       for(int v_id = 0; v_id < this_level.Len(); v_id++) {
-        TUNGraph::TNodeI v = g->GetNI(this_level[v_id]);
+        typename PGraph::TObj::TNodeI v = g->GetNI(this_level[v_id]);
         
         for(int w_id = 0; w_id < v.GetOutDeg(); w_id++) {
           w = v.GetOutNId(w_id);
@@ -462,7 +443,7 @@ TIntV GetShortPath_fast(const PGraph& g, int src_id, int trg_id) {
       this_level = reverse_fringe;
       reverse_fringe.Clr();
       for(int v_id = 0; v_id < this_level.Len(); v_id++) {
-        TUNGraph::TNodeI v = g->GetNI(this_level[v_id]);
+        typename PGraph::TObj::TNodeI v = g->GetNI(this_level[v_id]);
         
         for(int w_id = 0; w_id < v.GetInDeg(); w_id++) {
           w = v.GetInNId(w_id);
