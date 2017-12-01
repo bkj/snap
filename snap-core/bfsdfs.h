@@ -17,6 +17,10 @@ template <class PGraph> int GetNodesAtHops(const PGraph& Graph, const int& Start
 template <class PGraph> int GetShortPath(const PGraph& Graph, const int& SrcNId, const int& DstNId, const bool& IsDir=false);
 /// Returns the length of the shortest path from node SrcNId to all other nodes in the network. ##GetShortPath2
 template <class PGraph> int GetShortPath(const PGraph& Graph, const int& SrcNId, TIntH& NIdToDistH, const bool& IsDir=false, const int& MaxDist=TInt::Mx);
+// >>
+// TIntV GetShortPath_fast_compute_path(const TIntIntH& pred, const TIntIntH& succ, int w);
+template <class PGraph> TIntV GetShortPath_fast(const PGraph& g, int src_id, int trg_id);
+// <<
 
 /////////////////////////////////////////////////
 // Diameter
@@ -383,6 +387,111 @@ int GetShortPath(const PGraph& Graph, const int& SrcNId, const int& DstNId, cons
   BFS.DoBfs(SrcNId, true, ! IsDir, DstNId, TInt::Mx);
   return BFS.GetHops(SrcNId, DstNId);
 }
+
+// >>
+// TIntV GetShortPath_fast_compute_path(const TIntIntH& pred, const TIntIntH& succ, int w) {
+//   TIntV path;
+  
+//   while(w != -1) {
+//     path.Add(w);
+//     w = pred.GetDat(w);
+//   }
+  
+//   path.Reverse();
+  
+//   w = succ.GetDat(path.Last());
+//   while(w != -1) {
+//     path.Add(w);
+//     w = succ.GetDat(w);
+//   }
+  
+//   return path;
+// }
+
+template <class PGraph>
+TIntV GetShortPath_fast(const PGraph& g, int src_id, int trg_id) {
+  
+  TIntV path;
+  if(src_id == trg_id) {
+    return path;
+  }
+  
+  TIntIntH pred; pred.AddDat(src_id, -1);
+  TIntIntH succ; succ.AddDat(trg_id, -1);
+  
+  TIntV forward_fringe; forward_fringe.Add(src_id);
+  TIntV reverse_fringe; reverse_fringe.Add(trg_id);
+
+  TIntV this_level;
+  int w;
+  while ((forward_fringe.Len() > 0) && (reverse_fringe.Len() > 0)) {
+    
+    if (forward_fringe.Len() <= reverse_fringe.Len()) {
+      
+      this_level = forward_fringe;
+      forward_fringe.Clr();
+      for(int v_id = 0; v_id < this_level.Len(); v_id++) {
+        TUNGraph::TNodeI v = g->GetNI(this_level[v_id]);
+        
+        for(int w_id = 0; w_id < v.GetOutDeg(); w_id++) {
+          w = v.GetOutNId(w_id);
+          if(!pred.IsKey(w)) {
+            forward_fringe.Add(w);
+            pred.AddDat(w, this_level[v_id]);
+          }
+          if(succ.IsKey(w)) {
+            while(w != -1) {
+              path.Add(w);
+              w = pred.GetDat(w);
+            }
+            
+            path.Reverse();
+            
+            w = succ.GetDat(path.Last());
+            while(w != -1) {
+              path.Add(w);
+              w = succ.GetDat(w);
+            }
+            return path;
+          }
+        }
+      }
+      
+    } else {
+      
+      this_level = reverse_fringe;
+      reverse_fringe.Clr();
+      for(int v_id = 0; v_id < this_level.Len(); v_id++) {
+        TUNGraph::TNodeI v = g->GetNI(this_level[v_id]);
+        
+        for(int w_id = 0; w_id < v.GetInDeg(); w_id++) {
+          w = v.GetInNId(w_id);
+          if(!succ.IsKey(w)) {
+            reverse_fringe.Add(w);
+            succ.AddDat(w, this_level[v_id]);
+          }
+          if(pred.IsKey(w)) {
+            while(w != -1) {
+              path.Add(w);
+              w = pred.GetDat(w);
+            }
+            
+            path.Reverse();
+            
+            w = succ.GetDat(path.Last());
+            while(w != -1) {
+              path.Add(w);
+              w = succ.GetDat(w);
+            }
+            return path;
+          }
+        }
+      } 
+    }
+  }
+  return path;
+}
+// <<
 
 template <class PGraph>
 int GetBfsFullDiam(const PGraph& Graph, const int& NTestNodes, const bool& IsDir) {
